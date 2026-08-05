@@ -1,0 +1,7 @@
+# Anuma AI 注册脚本运行时依赖 (系统 python3 + camoufox / hcaptcha-challenger)
+# 主要依赖已由运行环境提供, 路径通过环境变量注入 (见 register.py 顶部):
+#   - camoufox            CAMOUFOX_SITE_PACKAGES
+#   - hcaptcha_challenger HC_CHALLENGER_SRC / HC_CHALLENGER_VENV_SP
+# 本文件仅列出标准库之外的最小集合, 供 pip 安装参考:
+requests>=2.28.0
+pydantic>=2.0

@@ -1,0 +1,46 @@
+services:
+  gateway:
+    build: .
+    image: anuma2api/gateway:latest
+    container_name: anuma2api-gateway
+    ports:
+      - "${ANUMA_PORT:-7895}:${ANUMA_PORT:-7895}"
+    environment:
+      # Accounts are pushed to the gateway via POST /api/accounts; the CSV
+      # mount is gone (SPEC-upload §4). SQLite persistence survives restarts.
+      # All values are env-parameterized with safe defaults; the admin password
+      # MUST be overridden in .env (see .env.example) before exposing the port.
+      - ANUMA_DB_PATH=${ANUMA_DB_PATH:-/app/data/gateway.db}
+      - ANUMA_PORT=${ANUMA_PORT:-7895}
+      - ANUMA_MODEL_CACHE_TTL=${ANUMA_MODEL_CACHE_TTL:-600}
+      - ANUMA_ADMIN_PASSWORD=${ANUMA_ADMIN_PASSWORD:-YOUR_ADMIN_PASSWORD}
+      - ANUMA_UPSTREAM_BASE_URL=${ANUMA_UPSTREAM_BASE_URL:-https://portal.anuma.ai/api/v1}
+      - ANUMA_PRIVY_BASE_URL=${ANUMA_PRIVY_BASE_URL:-https://auth.privy.io/api/v1}
+      - ANUMA_MAX_RETRIES=${ANUMA_MAX_RETRIES:-5}
+      - ANUMA_AUTH_FAIL_LIMIT=${ANUMA_AUTH_FAIL_LIMIT:-3}
+      - ANUMA_MODEL_ALLOWLIST=${ANUMA_MODEL_ALLOWLIST:-inclusionai/ling-2.6-flash,openai/gpt-5.6-luna,qwen/qwen-3.6-plus,minimax/minimax-m2.5,anthropic/claude-sonnet-5,gemini/gemini-3.1-pro-preview,gemini/gemini-3-flash-preview,grok/grok-4.5,glm/glm-5.2,kimi/kimi-k3,minimax/minimax-m3,qwen/qwen-3.7-plus}
+      - ANUMA_REFRESH_INTERVAL=${ANUMA_REFRESH_INTERVAL:-1800}
+      - ANUMA_AUTO_CONTINUE=${ANUMA_AUTO_CONTINUE:-true}
+      - ANUMA_AUTO_CONTINUE_MAX_SEGMENTS=${ANUMA_AUTO_CONTINUE_MAX_SEGMENTS:-8}
+      - ANUMA_COOLDOWN_CHECK_INTERVAL=${ANUMA_COOLDOWN_CHECK_INTERVAL:-86400}
+      - ANUMA_RETRY_BACKOFF_MS=${ANUMA_RETRY_BACKOFF_MS:-300}
+    volumes:
+      - gateway-data:/app/data
+    healthcheck:
+      # /healthz is the public probe (SPEC-auth §2): exits non-zero when the
+      # gateway cannot serve, so orchestration restarts a wedged container.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:7895/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      # Bound the json-file log (2-15): 10 files of 10MB each.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "10"
+    restart: unless-stopped
+
+volumes:
+  gateway-data:

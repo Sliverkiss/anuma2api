@@ -1,0 +1,45 @@
+# =============================================================================
+# Anuma 2API — 根 .gitignore（防 GitHub 推送泄露）
+# =============================================================================
+# 凭据与账号数据
+accounts.csv
+accounts.json
+*.csv
+*.json.tmp
+*.json.bak
+
+# SQLite 数据库及其 WAL/SHM 副本
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# 环境变量（保留 .env.example）
+.env
+.env.*
+!.env.example
+
+# 日志
+*.log
+logs/
+nohup.out
+
+# 报告中的敏感产物（若含 token）
+reports/*.json
+reports/browser-capture.json
+reports/closed-source-reverse.md
+
+# 临时/调试产物
+/tmp/
+debug_final.png
+*.tmp
+*.bak
+
+# Python 虚拟环境与缓存
+__pycache__/
+*.py[cod]
+.venv/
+camoufox_env/
+venv/
+.pytest_cache/

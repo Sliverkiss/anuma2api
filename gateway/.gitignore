@@ -1,0 +1,24 @@
+# =============================================================================
+# Anuma 2API Gateway — .gitignore（gateway 独立仓库时防泄露）
+# =============================================================================
+# SQLite 数据库及其 WAL/SHM 副本
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+/data/
+
+# 环境变量（保留 .env.example）
+.env
+.env.*
+!.env.example
+
+# 日志
+*.log
+logs/
+
+# Go 构建产物
+/gateway
+/bin/
+*.test
