@@ -100,7 +100,28 @@ python3 register.py --import-csv --dry-run   # 先预览
 python3 register.py --import-csv             # 实际上传
 ```
 
-注册需要可用的 **camoufox** 与 **hcaptcha-challenger** 环境（路径通过环境变量注入，见下节），以及一个 cf-temp-mail 临时邮箱服务的 `CF_TEMP_MAIL_KEY`。
+注册需要可用的 **camoufox** 与 **hcaptcha-challenger** 环境（路径通过环境变量注入，见下节），以及一个临时邮箱服务。
+
+### 临时邮箱提供商
+
+注册脚本支持两种临时邮箱提供商（通过 `MAIL_PROVIDER` 环境变量或 `--mail-provider` 参数选择）：
+
+| 提供商 | 说明 | 必填配置 |
+|--------|------|----------|
+| `cftemp`（默认） | cf-temp-mail 服务 | `CF_TEMP_MAIL_API` / `CF_TEMP_MAIL_KEY` / `CF_TEMP_MAIL_DOMAIN` |
+| `yydsmail` | YYDS Mail 服务（`mail_providers/yydsmail.py`） | `YYDS_MAIL_API_KEY`（`YYDS_MAIL_BASE_URL` / `YYDS_MAIL_DOMAIN` / `YYDS_MAIL_SUBDOMAIN` / `YYDS_MAIL_WILDCARD` 可选） |
+
+```bash
+# 使用 YYDS Mail
+MAIL_PROVIDER=yydsmail \
+YYDS_MAIL_API_KEY=your_key \
+python3 register.py --count 1
+
+# 或通过命令行参数覆盖（优先级高于环境变量）
+python3 register.py --mail-provider yydsmail --count 1
+```
+
+> 注意：`yydsmail` 提供商需要 `pip install curl_cffi`（已加入 `requirements.txt`）。
 
 ### 3. 验证网关
 
@@ -138,6 +159,12 @@ curl -H "Authorization: Bearer YOUR_ADMIN_PASSWORD" \
 | `CF_TEMP_MAIL_API` | `YOUR_MAIL_DOMAIN` | 临时邮箱服务 API base |
 | `CF_TEMP_MAIL_KEY` | — | 临时邮箱建箱鉴权 key（必填） |
 | `CF_TEMP_MAIL_DOMAIN` | `YOUR_MAIL_DOMAIN` | 临时邮箱域名 |
+| `MAIL_PROVIDER` | `cftemp` | 临时邮箱提供商：`cftemp` / `yydsmail` |
+| `YYDS_MAIL_API_KEY` | — | YYDS Mail API key（`MAIL_PROVIDER=yydsmail` 时必填） |
+| `YYDS_MAIL_BASE_URL` | `https://maliapi.215.im/v1` | YYDS Mail API base |
+| `YYDS_MAIL_DOMAIN` | — | YYDS Mail 域名（可选） |
+| `YYDS_MAIL_SUBDOMAIN` | — | YYDS Mail 子域名（可选） |
+| `YYDS_MAIL_WILDCARD` | `false` | YYDS Mail 通配符建箱（可选） |
 | `ANUMA_GATEWAY_URL` | `http://127.0.0.1:7895` | 注册脚本推送网关的地址 |
 | `ANUMA_GATEWAY_TOKEN` | — | 推送网关用的 Bearer token（与 `ANUMA_ADMIN_PASSWORD` 一致） |
 | `CAMOUFOX_SITE_PACKAGES` | — | camoufox Python site-packages 路径 |
