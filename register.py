@@ -104,7 +104,7 @@ YYDS_MAIL_SUBDOMAIN = os.environ.get("YYDS_MAIL_SUBDOMAIN", "")
 YYDS_MAIL_WILDCARD = os.environ.get("YYDS_MAIL_WILDCARD", "").lower() in ("1", "true", "yes", "on")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "point/glm-5v-turbo")
 
-PRIVY_APP_ID = "YOUR_PRIVY_APP_ID"
+PRIVY_APP_ID = os.environ.get("PRIVY_APP_ID", "YOUR_PRIVY_APP_ID")
 PRIVY_CLIENT = "react-auth:3.14.1"
 PRIVY_AUTH = "https://auth.privy.io/api/v1"
 PORTAL = "https://portal.anuma.ai/api/v1"
