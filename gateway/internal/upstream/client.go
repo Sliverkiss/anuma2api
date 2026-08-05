@@ -28,7 +28,7 @@ const (
 
 // Upstream constants (SPEC section 3.1).
 const (
-	PrivyAppID  = "YOUR_PRIVY_APP_ID"
+	PrivyAppID  = "cmjrfihuc03h8l10ca0bi9o2y"
 	PrivyClient = "react-auth:3.14.1"
 	userAgent   = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
 )

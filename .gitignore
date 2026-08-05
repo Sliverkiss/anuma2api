@@ -43,3 +43,6 @@ __pycache__/
 camoufox_env/
 venv/
 .pytest_cache/
+deploy/.env
+gateway-bin
+gateway.env
