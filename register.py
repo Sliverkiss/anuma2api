@@ -93,9 +93,18 @@ if _ROOT_ENV.exists():
 MAIL_API = os.environ.get("CF_TEMP_MAIL_API", "https://YOUR_MAIL_DOMAIN").rstrip("/")
 MAIL_KEY = os.environ.get("CF_TEMP_MAIL_KEY", "")
 MAIL_DOM = os.environ.get("CF_TEMP_MAIL_DOMAIN", "YOUR_MAIL_DOMAIN")
+
+# 临时邮箱提供商选择: cftemp (默认, cf-temp-mail) | yydsmail
+MAIL_PROVIDER = os.environ.get("MAIL_PROVIDER", "cftemp").strip().lower()
+# YYDS Mail 配置 (MAIL_PROVIDER=yydsmail 时生效)
+YYDS_MAIL_API_KEY = os.environ.get("YYDS_MAIL_API_KEY", "")
+YYDS_MAIL_BASE_URL = os.environ.get("YYDS_MAIL_BASE_URL", "")
+YYDS_MAIL_DOMAIN = os.environ.get("YYDS_MAIL_DOMAIN", "")
+YYDS_MAIL_SUBDOMAIN = os.environ.get("YYDS_MAIL_SUBDOMAIN", "")
+YYDS_MAIL_WILDCARD = os.environ.get("YYDS_MAIL_WILDCARD", "").lower() in ("1", "true", "yes", "on")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "point/glm-5v-turbo")
 
-PRIVY_APP_ID = "YOUR_PRIVY_APP_ID"
+PRIVY_APP_ID = os.environ.get("PRIVY_APP_ID", "YOUR_PRIVY_APP_ID")
 PRIVY_CLIENT = "react-auth:3.14.1"
 PRIVY_AUTH = "https://auth.privy.io/api/v1"
 PORTAL = "https://portal.anuma.ai/api/v1"
@@ -191,6 +200,30 @@ class TempMail:
                     return codes[0]
             time.sleep(4)
         raise TimeoutError(f"{int(timeout)}s 内未收到验证码")
+
+
+# ---------------------------------------------------------------------------
+# 临时邮箱提供商工厂 (cftemp | yydsmail)
+# ---------------------------------------------------------------------------
+def make_mail_provider() -> TempMail:
+    """按 MAIL_PROVIDER 环境变量返回临时邮箱实例（统一 create/wait_otp 接口）。"""
+    if MAIL_PROVIDER == "yydsmail":
+        try:
+            from mail_providers.yydsmail import YydsMailProvider
+        except ImportError as e:
+            raise RuntimeError(f"导入 yydsmail 提供商失败: {e} (需要 pip install curl_cffi)") from e
+        if not YYDS_MAIL_API_KEY:
+            raise RuntimeError("MAIL_PROVIDER=yydsmail 但缺少 YYDS_MAIL_API_KEY (请配置环境变量)")
+        log(f"临时邮箱提供商: YYDS Mail")
+        return YydsMailProvider(
+            api_key=YYDS_MAIL_API_KEY,
+            base_url=YYDS_MAIL_BASE_URL,
+            domain=YYDS_MAIL_DOMAIN,
+            subdomain=YYDS_MAIL_SUBDOMAIN,
+            wildcard=YYDS_MAIL_WILDCARD,
+        )
+    log("临时邮箱提供商: cf-temp-mail")
+    return TempMail()
 
 
 # ---------------------------------------------------------------------------
@@ -519,7 +552,13 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="--import-csv 只打印预览, 不上传")
     ap.add_argument("--max-consecutive-failures", type=int, default=5,
                     help="连续注册失败达到该次数即熔断退出 (默认 5)")
+    ap.add_argument("--mail-provider", default=None,
+                    help="临时邮箱提供商: cftemp (默认) | yydsmail (覆盖环境变量 MAIL_PROVIDER)")
     args = ap.parse_args()
+
+    global MAIL_PROVIDER
+    if args.mail_provider:
+        MAIL_PROVIDER = args.mail_provider.strip().lower()
 
     if args.import_csv:
         sys.exit(import_csv(args))
@@ -556,7 +595,7 @@ def main():
     for i in range(args.count):
         log(f"===== 注册账号 {i + 1}/{args.count} =====")
         try:
-            acc = asyncio.run(register_one(TempMail(), debug=args.debug))
+            acc = asyncio.run(register_one(make_mail_provider(), debug=args.debug))
             accounts.append(acc)
             tmp_out = out_path.with_suffix(".json.tmp")
             tmp_out.write_text(json.dumps(accounts, ensure_ascii=False, indent=2))

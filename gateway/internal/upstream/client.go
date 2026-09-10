@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -26,9 +27,12 @@ const (
 	maxFailuresBeforeSkip = 3
 )
 
-// Upstream constants (SPEC section 3.1).
-const (
-	PrivyAppID  = "YOUR_PRIVY_APP_ID"
+// Upstream config (SPEC section 3.1). PrivyAppID is configurable via the
+// PRIVY_APP_ID env var (it is a public per-app identifier, but keeping it
+// out of the source tree lets deployments point at their own Privy app).
+var (
+	PrivyAppID = envOr("PRIVY_APP_ID", "YOUR_PRIVY_APP_ID")
+
 	PrivyClient = "react-auth:3.14.1"
 	userAgent   = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
 )
@@ -45,6 +49,14 @@ const (
 	ErrInsufficient           // payment_required / balance exhausted -> disable account
 	ErrUpstream               // 5xx -> surface as 502 with trace_id
 )
+
+// envOr returns the value of the named env var, or fallback when empty.
+func envOr(name, fallback string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return fallback
+}
 
 func (k ErrorKind) String() string {
 	switch k {
